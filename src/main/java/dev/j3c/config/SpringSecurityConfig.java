@@ -1,5 +1,6 @@
 package dev.j3c.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -7,6 +8,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -14,20 +16,32 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @EnableWebSecurity
 public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
+    private final UserDetailsService userDetailsService;
+
+    @Autowired
+    public SpringSecurityConfig(UserDetailsService userDetailsService) {
+        this.userDetailsService = userDetailsService;
+    }
+
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         //super.configure(auth); // Default value
-        auth.inMemoryAuthentication()
-                .withUser("juan.camilo")
-                .password(passwordEncoder().encode("12345")) // Password must be encoded
-                .authorities("USER","ADMIN");
+
+        //In memory auth
+//        auth.inMemoryAuthentication()
+//                .withUser("juan.camilo")
+//                .password(passwordEncoder().encode("12345")) // Password must be encoded
+//                .authorities("USER","ADMIN");
+
+        //Database auth
+        auth.userDetailsService(userDetailsService).passwordEncoder(passwordEncoder());
+
     }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
-
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -40,9 +54,24 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
         //It'll only allow the requests from authenticated users
         http.authorizeRequests().anyRequest().authenticated();
 
+        //Enable the H2 DB
+        http.authorizeRequests(requests -> requests.antMatchers("/h2-console/**")
+                        .permitAll()
+                        .anyRequest()
+                        .authenticated())
+                .httpBasic();
+
+        //h2-console
+        http.csrf()
+                .disable()
+                .headers()
+                .frameOptions()
+                .disable();
+
         //It'll display the login form for authentication
         http.formLogin();
         http.httpBasic();
+
     }
 
 }
