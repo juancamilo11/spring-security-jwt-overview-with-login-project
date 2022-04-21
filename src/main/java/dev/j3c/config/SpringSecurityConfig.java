@@ -1,5 +1,7 @@
 package dev.j3c.config;
 
+import dev.j3c.config.jwt.JwtTokenHelper;
+import dev.j3c.controllers.RestAuthEntryPoint;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,10 +19,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 public class SpringSecurityConfig extends WebSecurityConfigurerAdapter {
 
     private final UserDetailsService userDetailsService;
+    private final JwtTokenHelper jwtTokenHelper;
+    private final RestAuthEntryPoint restAuthEntryPoint;
 
     @Autowired
-    public SpringSecurityConfig(UserDetailsService userDetailsService) {
+    public SpringSecurityConfig(UserDetailsService userDetailsService, JwtTokenHelper jwtTokenHelper, RestAuthEntryPoint restAuthEntryPoint) {
         this.userDetailsService = userDetailsService;
+        this.jwtTokenHelper = jwtTokenHelper;
+        this.restAuthEntryPoint = restAuthEntryPoint;
     }
 
     @Override
